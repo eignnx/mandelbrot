@@ -1,0 +1,13 @@
+Single threaded, banded
+
+$ time ./target/release/mandelbrot test3-2.png 4000x3000 -1.2,0.35 -1,0.20
+
+real    0m5.888s
+user    0m5.746s
+sys     0m0.027s
+
+$ time ./target/release/mandelbrot test3-2.png 4000x3000 -1.2,0.35 -1,0.20
+
+real    0m5.898s
+user    0m5.794s
+sys     0m0.044s
