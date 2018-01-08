@@ -215,35 +215,41 @@ fn render(pixels: &mut [u8],
     }
 }
 
-fn parallel_render(pixels: &mut [u8],
-                   px_win: PxWindow,
-                   c_win: CWindow,
-                   color_fn: &Fn(f32) -> f32)
-{
-    let threads = 4; // Quad core laptop.
+extern crate crossbeam;
 
+fn parallel_render<F>(pixels: &mut [u8],
+                      px_win: PxWindow,
+                      c_win: CWindow,
+                      color_fn: &F,
+                      threads: usize)
+where F : Fn(f32) -> f32 + Send + Sync
+{
     let max_rows_per_band = px_win.height / threads + 1; // Rounds up.
     let max_px_per_band = max_rows_per_band * px_win.width;
 
     let bands =
         pixels.chunks_mut(max_px_per_band);
 
-    for (i, band) in bands.enumerate() {
+    crossbeam::scope(|spawner| {
+        for (i, band) in bands.enumerate() {
 
-        let band_top = i * max_rows_per_band; // Row index of top row in ith band.
-        let actual_rows = band.len() / px_win.width;
+            let band_top = i * max_rows_per_band; // Row index of top row in ith band.
+            let actual_rows = band.len() / px_win.width;
 
-        let band_px_win = PxWindow { width: px_win.width, height: actual_rows };
+            let band_px_win = PxWindow { width: px_win.width, height: actual_rows };
 
-        let band_upper_left_px = PixelPt::new(0, band_top);
-        let band_lower_right_px = PixelPt::new(px_win.width, band_top + actual_rows);
-        let band_c_win = CWindow::new(
-            pixel_to_point(band_upper_left_px, px_win, c_win),
-            pixel_to_point(band_lower_right_px, px_win, c_win)
-        );
+            let band_upper_left_px = PixelPt::new(0, band_top);
+            let band_lower_right_px = PixelPt::new(px_win.width, band_top + actual_rows);
+            let band_c_win = CWindow::new(
+                pixel_to_point(band_upper_left_px, px_win, c_win),
+                pixel_to_point(band_lower_right_px, px_win, c_win)
+            );
 
-        render(band, band_px_win, band_c_win, color_fn);
-    }
+            spawner.spawn(move || {
+                render(band, band_px_win, band_c_win, color_fn);
+            });
+        }
+    });
 }
 
 use std::io::Result;
@@ -267,10 +273,10 @@ fn save_image(filename: &str, pixels: &[u8], px_win: PxWindow) -> Result<()> {
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
-    if args.len() != 5 {
+    if args.len() != 6 {
         eprintln!("Incorrect number of arguments!");
-        eprintln!("Usage: {} FILENAME IMG_SIZE UPPER_LEFT LOWER_RIGHT", &args[0]);
-        eprintln!("Example: {} mandel.png 800x600 -4,3 4,-3", &args[0]);
+        eprintln!("Usage: {} FILENAME IMG_SIZE UPPER_LEFT LOWER_RIGHT #THREADS", &args[0]);
+        eprintln!("Example: {} mandel.png 800x600 -4,3 4,-3 4", &args[0]);
         std::process::exit(1);
     }
 
@@ -281,13 +287,14 @@ fn main() {
         .expect("Incorrect upper left bounds formatting!");
     let lower_right = parse_complex(&args[4])
         .expect("Incorrect lower right bounds formatting!");
+    let threads = usize::from_str(&args[5])
+        .expect("Incorrect thread number formatting!");
 
     let c_window = CWindow::new(upper_left, lower_right);
 
     let mut pixels = vec![0u8; px_window.width * px_window.height];
 
-    //render(&mut pixels, px_window, c_window, &log_color);
-    parallel_render(&mut pixels, px_window, c_window, &log_color);
+    parallel_render(&mut pixels, px_window, c_window, &log_color, threads);
 
     save_image(filename, &pixels, px_window)
         .expect("Error exporting image!");
