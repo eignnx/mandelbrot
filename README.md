@@ -9,4 +9,4 @@ Through trial and error, it seems like 10 threads works the fastest on my machin
 ## Running on the Tinker Board
 I also ran some tests on my Tinker Board. Here is a plot of real execution time vs number of threads. The same image was generated for these tests as was generated in the previous tests.
 
-![Plot of execution time, seconds vs. number of threads](https://github.com/eignnx/mandelbrot/Threads-vs-Execution-Time-Mandelbrot-Tinker-Board-Plot.png)
+![Plot of execution time, seconds vs. number of threads](https://github.com/eignnx/mandelbrot/blob/master/Threads-vs-Execution-Time-Mandelbrot-Tinker-Board-Plot.png)
