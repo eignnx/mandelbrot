@@ -1,0 +1,34 @@
+Tinker board, 10 threads
+
+$ time ./target/release/mandelbrot images/test3-5.png 4000x3000 -1.2,0.35 -1,0.20 10
+
+real	0m3.987s
+user	0m12.890s
+sys	0m0.030s
+
+
+Tinker board, 1 threads
+
+time ./target/release/mandelbrot images/test3-5.png 4000x3000 -1.2,0.35 -1,0.20 1
+
+real	0m12.693s
+user	0m12.630s
+sys	0m0.050s
+
+
+Tinker board, 4 threads
+
+$ time ./target/release/mandelbrot images/test3-5.png 4000x3000 -1.2,0.35 -1,0.20 4
+
+real	0m6.865s
+user	0m12.890s
+sys	0m0.070s
+
+
+Tinker board, 12 threads
+
+$ time ./target/release/mandelbrot images/test3-5.png 4000x3000 -1.2,0.35 -1,0.20 12
+
+real	0m3.915s
+user	0m12.950s
+sys	0m0.060s
